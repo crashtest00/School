@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1488076087 source:c:\csc123\function_lab\function_lab\main.cpp
+	<iostream>
+	<cstdlib>
+	<vector>
+

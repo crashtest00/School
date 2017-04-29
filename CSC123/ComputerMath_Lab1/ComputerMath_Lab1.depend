@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1485114615 source:c:\csc123\computermath_lab1\main.cpp
+	<cstdlib>
+	<iostream>
+
