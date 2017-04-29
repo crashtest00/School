@@ -1,8 +1,6 @@
 #include <iostream>
 
 using namespace std;
-//This comment is strictly for testing the github functionality
-//This functionality works
 //Use .csv to make importing to spreadsheet software easy
 //Need an object for the inventory items w/ Name(string w/ spaces), SKU(c.string?), price(double), qtyOnHand(int)
 //Need to enforce a reasonable character maximum for each field in the object
