@@ -11,7 +11,6 @@ file to be opened and edited in most spreadsheet programs such as Google Sheets 
 #include <vector>
 
 using namespace std;
-<<<<<<< HEAD
 
 struct item //Class for items
 {
@@ -28,11 +27,6 @@ void fileLoad();
 void addItem(vector<item>&);
 void showInventory(vector<item>&);
 //void fileSort(vector)
-=======
-//Use .csv to make importing to spreadsheet software easy
-//Need an object for the inventory items w/ Name(string w/ spaces), SKU(c.string?), price(double), qtyOnHand(int)
-//Need to enforce a reasonable character maximum for each field in the object
->>>>>>> origin/master
 
 int main()
 {
@@ -171,9 +165,12 @@ void addItem(vector<item> &itemList) //Case 3: Add an item to inventory
     string inputBuffer;
 
     cout << "*** Menu: Add Item ***" << endl;
+
     cout << "Enter item number:";
     getline(cin, newItem.sku);
-    if(doesContain = itemAddress != -1) add one to itemList[itemAddress].qtyOnHand
+        if(doesContain = itemAddress != -1)
+            //add one to itemList[itemAddress].qtyOnHand
+
     cout << "Enter item description:";
     getline(cin, newItem.description);
     cout << "Enter item price:";
