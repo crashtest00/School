@@ -1,0 +1,8 @@
+# depslib dependency file v1.0
+1493531961 source:c:\school\csc123\fun_with_tuples\main.cpp
+	<tuple>
+	<iostream>
+	<string>
+	<stdexcept>
+	<vector>
+
