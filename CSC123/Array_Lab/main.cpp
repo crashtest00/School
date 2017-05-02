@@ -1,31 +1,35 @@
 //                     ******INVENTORY MANAGEMENT PROGRAM******
 /* This program provides a means to opening, editing, and reviewing a .csv inventory file.
-The .csv file type was selected for its universal compatibility which allows this inventory
-file to be opened and edited in most spreadsheet programs such as Google Sheets and MS Excel. */
+The .csv file type was selected for its nearly universal compatibility, allowing the inventory
+files to be opened and edited in most spreadsheet programs such as Google Sheets and MS Excel. */
 
 #include <iostream>
 #include <fstream> //Needed for file manip
 #include <string>
 #include <cstring> //strncmp used in sort function
-//#include <iomanip> //Doesn't look like this is needed
+#include <iomanip> //Doesn't look like this is needed
 #include <stdlib.h> //Needed for casting types
 #include <vector> //Crucial lib for all the operations!
 #include <sstream> //Used in fileLoad to parse item data
 
 using namespace std;
 
-struct item //Class for items
-{
+struct item{ //struct for items
  string sku;
  string description;
  double price;
  int qtyOnHand;
 };
 
+struct searchResult{ //holds found and location values for binarySearch;
+    bool found;
+    int location;
+};
+
 //MENU FUNCTIONS
-int totalInvOnHand(vector<item>&); //Used below menu to show total number of items on hand
+int totalInvOnHand(vector<item>&); //Used on main menu screen to show total number of items on hand
 string fileOpen(vector<item>&); //Case 1: Opens working file
-//itemSearch //Case 2: Searches for an item in the inventory vector
+void itemSearch(vector<item>&); //Case 2: Searches for an item in the inventory vector
 void addItem(vector<item>&); //Case 3: Adds item to inventory vector
 void showInventory(vector<item>&); //Case 4: Shows all items in inventory vector
 void inventoryValue(vector<item>&); //Case 5: Shows current inventory value
@@ -36,7 +40,10 @@ void fileLoad(vector<item>&, ifstream&); //Loads file into memory and returns na
 char charCast(string, int);//Checks input string for valid char value, then returns the valid char value
 void sortInventory(vector<item>&); //Bubble sort is used to catch and handle duplicate sku's
 int itemCompare(const struct item&, const struct item&); //x=y: 0, x<y: -1, x>y: 1
-void itemSwap(vector<item>& swapVector, int a, int b); //Swap function for sorting
+void itemSwap(vector<item>&, int, int); //Swap function for sorting
+searchResult binarySearch(vector<item>&, string);//Binary search
+void rowFormat(item); //Format item output into legible columns
+void placeItem(vector<item>&, item); //Figures out where to place the new item so vector doesn't have to be sorted again
 
 int main()
 {
@@ -62,15 +69,16 @@ int main()
             cout << "No inventory file has been opened. Inventory Quantity is unavailable." << endl;
         else {
             cout << "Current Working File: " << fileName << endl;
-            cout << "Current number of items in inventory: " <<totalInvOnHand(inventory) << endl; //Needs updated to show number of items in inventory
+            cout << "Total quantity of all items in inventory: " <<totalInvOnHand(inventory) << endl;
         }
+
         //Main Menu
         cout << "Enter Your Selection: ";
         getline(cin, menuChoiceStr);
-        menuChoiceChar = charCast(menuChoiceStr, 7); //Ye Olde cast-char-to-string function now improved to simplify handling for different number of menu options (7 in this case)
+        menuChoiceChar = charCast(menuChoiceStr, 7); //Ye Olde cast-char-to-string function now improved to handle different number of menu options (7 in this case)
         switch (menuChoiceChar){
             case '1': //Open file or create one if file name doesn't exist
-                fileName = fileOpen(inventory); //Needs replaced with a function that returns a tuple
+                fileName = fileOpen(inventory);
                 if(fileName == "")
                     break;
                 isOpen = true;
@@ -81,7 +89,7 @@ int main()
                     break;
                 }
                 else
-                    cout << "Search for item\n"; //itemSearch
+                    itemSearch(inventory);
                 break;
             case '3': //Add item to inventory
                 if(isOpen == false){
@@ -90,7 +98,6 @@ int main()
                 }
                 else
                     addItem(inventory);
-                cout << "Number of items in inventory " << inventory.size();
                 break;
             case '4': //Show current inventory
                 if(isOpen == false){
@@ -122,12 +129,10 @@ int main()
                 cout << "Invalid selection. Please try again.\n" << endl;
         } //End Switch menu
     }while(exit == false);
-    cout << "Ending Program\n";
 }
 
 // Menu Functions
-string fileOpen(vector<item>& invVector) // Case 1: Loads a selected file into memory for edit/review
-{
+string fileOpen(vector<item>& invVector){ // Case 1: Loads a selected file into memory for edit/review
     string fileNameStr, realFileName;
     ifstream inStream;
     ofstream outStream;
@@ -135,7 +140,6 @@ string fileOpen(vector<item>& invVector) // Case 1: Loads a selected file into m
     cout << "Please enter the name of the file without extension: ";
     getline(cin, fileNameStr);
     realFileName = fileNameStr + ".csv";
-
     inStream.open(realFileName);
     if(inStream.fail()){
         outStream.open(realFileName);
@@ -147,37 +151,54 @@ string fileOpen(vector<item>& invVector) // Case 1: Loads a selected file into m
         outStream.close();
         return realFileName;
     }
-    fileLoad(invVector, inStream); //Passes invVector to function so datacan be loaded from file
-    //invSorted = fileSort(invVector); //Sorts vector to facilitate searching
+    fileLoad(invVector, inStream); //Passes invVector to load data from file
+    sortInventory(invVector); //Sorts inventory vector
     inStream.close();
+    cout << realFileName << " has been opened and sorted successfully!\n";
     return realFileName;
 }
 
-/* void itemSearch  //Case 2: Search for item
-string sku
-cout << "*** Menu: Item Search ***"
-getline(cin, sku);
-Iterate through vector until found
-    if found
-        cout: object at the address where the item number was found
-If end of vector && not found
-    cout << "Item not found!"
-return to main menu
-*/
+void itemSearch(vector<item> &itemList){ //Case 2: Searches for an item in the inventory vector
+    string sku;
+    int matchAddress;
+    searchResult isFound;
 
-void addItem(vector<item> &itemList) //Case 3: Add an item to inventory
-{
+    cout << "\n*** Menu: Item Search ***\n";
+    cout << "Enter the item number to search for: ";
+    getline(cin, sku);
+    isFound = binarySearch(itemList, sku);
+    if(isFound.found == true){
+        cout << "Item found!\n";
+        cout << setw(12) << "Item Number" << setw(20) << "Description" << setw(10)
+          << "Price" << setw(5) << "Qty" << endl;
+        //cout << itemList[isFound.location].sku << itemList[isFound.location].description; //debug
+        rowFormat(itemList[isFound.location]);
+    }
+    else
+        cout << "Item not found!";
+    return;
+}
+
+void addItem(vector<item> &itemList){ //Case 3: Add an item to inventory
+
     item newItem;
     int newQty, itemAddress;
-    string inputBuffer;
+    string inputBuffer, overwrite;
+    searchResult foundItem;
 
     cout << "*** Menu: Add Item ***" << endl;
-
     cout << "Enter item number:";
     getline(cin, newItem.sku);
-        //if(doesContain = itemAddress != -1)
-            //add one to itemList[itemAddress].qtyOnHand
-
+    foundItem = binarySearch(itemList, newItem.sku); //Check if item already in inventory
+    if (foundItem.found = true){ //This if() can be removed if duplicate SKU's are allowed BUT itemSearch results would be ambiguous!
+        cout << "Item already exists in inventory! /n";
+        //cout << itemList[foundItem.location].description; //debug
+        rowFormat(itemList[foundItem.location]);
+        cout << "If you continue, existing item data will be overwritten. Do you wish to continue (Y/N)?";
+        getline(cin, overwrite);
+        if (overwrite != "y" && overwrite != "Y")
+            return;
+    }
     cout << "Enter item description:";
     getline(cin, newItem.description);
     cout << "Enter item price:";
@@ -190,18 +211,24 @@ void addItem(vector<item> &itemList) //Case 3: Add an item to inventory
     cout << "prior qtyOnHand: " << newItem.qtyOnHand << endl;
     newItem.qtyOnHand = newQty;
     cout << "New item Qty" << newItem.qtyOnHand << endl;
-    itemList.push_back(newItem); //Temporary fix until placeItem is functioning
-    // placeItem(newItem, itemList)
+    //itemList.push_back(newItem); //Debug
+    placeItem(itemList, newItem);
     cout << "\nItem was added successfully!\n";
     return;
     }
 
 void showInventory(vector<item> &itemList){ //Case 4: Lists inventory in memory (If file is open)
-    cout << "*** List Inventory ***" << endl;
-    for(int i=0; i < itemList.size(); i++)
-        cout << itemList[i].sku << " " << itemList[i].description << " " << itemList[i].price
-             << " " << itemList[i].qtyOnHand << endl;
-
+    cout << "            *** List Inventory ***\n";
+     cout << setw(12) << "Item Number" << setw(20) << "Description" << setw(10)
+          << "Price" << setw(5) << "Qty" << endl;
+    for(int i=0; i < itemList.size(); i++){
+        rowFormat(itemList[i]);
+        cout << endl;
+        if(i%15 == 14){
+            system("pause");
+            system("cls");
+        }
+    }
     return;
 }
 
@@ -219,7 +246,7 @@ void inventoryValue(vector<item> &itemList){ //Case 5: Show current inventory va
     return;
 }
 
-void saveFile(vector<item> &itemList, string workingFile){ //Saves inventory vector to disk using working file name
+void saveFile(vector<item> &itemList, string workingFile){ //Case 6: Saves inventory vector to disk using working file name
     ofstream outStream;
     outStream.open(workingFile);
 
@@ -233,6 +260,7 @@ void saveFile(vector<item> &itemList, string workingFile){ //Saves inventory vec
     }
     return;
 }
+
 
 //HELPER FUNCTIONS
 
@@ -251,7 +279,6 @@ int totalInvOnHand(vector<item> &itemList) { //iterate through the vector and ad
 void fileLoad (vector<item> &itemList, ifstream& inputFile){ //Helper function to load file contents into memory
     vector<string> itemBuffer;
     string strBuffer, metaBuffer;
-
     item addItem;
 
     while(!inputFile.eof()){ //Read in a row of data
@@ -266,32 +293,37 @@ void fileLoad (vector<item> &itemList, ifstream& inputFile){ //Helper function t
                 // cout << "metaBuffer is: " << metaBuffer << endl; // DEBUG
                 itemBuffer.push_back(metaBuffer);
             }
-            if(itemBuffer.size() != 4) //Make sure item has all necessary details!
-                cout << "\nINCOMPATIBLE FILE! Size is: \n" << itemBuffer.size() << endl;
-            addItem.sku = itemBuffer[0];
-            addItem.description = itemBuffer[1];
-            addItem.price = atof(itemBuffer[2].c_str());
-            addItem.qtyOnHand = atoi(itemBuffer[3].c_str());
-            itemList.push_back(addItem);
-            itemBuffer.clear();
+
+            if(itemBuffer.size() != 4){ //Make sure item has all necessary details!
+                cout << "\nFile is incompatible or corrupt. Item was found with missing data!\n" << itemBuffer.size() << endl;
+                return;
+            }
+
+            else if (itemBuffer[0] == "SKU") //Skip header row
+                itemBuffer.clear();
+
+            else {
+                addItem.sku = itemBuffer[0];
+                addItem.description = itemBuffer[1];
+                addItem.price = atof(itemBuffer[2].c_str());
+                addItem.qtyOnHand = atoi(itemBuffer[3].c_str());
+                itemList.push_back(addItem);
+                itemBuffer.clear();
+            }
         }
     }
-    sortInventory(itemList);
-    cout << "\nInventory file has been loaded and sorted.\n";
     return;
 }
 
-void sortInventory(vector<item>& rawList){
+void sortInventory(vector<item>& rawList){ //Bubble sort that catches matching items
     int compareResult;
 
     for(int i=rawList.size()-1; i>0; i--){
         for(int j=0; j < i; j++){
             compareResult = strcmp(rawList[j].sku.c_str(), rawList[j+1].sku.c_str());
-            //compareResult = itemCompare(rawList[j], rawList[j+1]);
-            cout << compareResult;
             if(compareResult > 0)
                 itemSwap(rawList, j, j+1);
-            else if(compareResult = 0){
+            else if(compareResult = 0){ //Really ought to have conflict resolution (price? description?) but beyond the scope of this version
                 rawList[j].qtyOnHand = rawList[j].qtyOnHand + rawList[j+1].qtyOnHand;
                 rawList.erase(rawList.begin()+j+1);
             }
@@ -300,7 +332,7 @@ void sortInventory(vector<item>& rawList){
     return;
 }
 
-int itemCompare(const struct item &x, const struct item &y){
+int itemCompare(const struct item &x, const struct item &y){ //compare SKU's of two items
     cout << "x sku = " << x.sku << " y sku = " << y.sku;
     if(x.sku == y.sku)
         return 0;
@@ -310,59 +342,60 @@ int itemCompare(const struct item &x, const struct item &y){
         return 1;
 }
 
-void itemSwap(vector<item>& swapVector, int a, int b) { //Swap a and b in the inventory vector
+void itemSwap(vector<item>& swapVector, int a, int b) { //Swap a and b in the vector argument
     item tempItem;
 
-    cout << "\n a = " << a << " b = " << b;
-    cout << "\n itemSwap launch successfull!\n";
+    //cout << "\n a = " << a << " b = " << b; //debug
     tempItem = swapVector[a];
     swapVector[a] = swapVector[b];
     swapVector[b] = tempItem;
-    cout << "\n itemSwap finish successfull!\n";
     return;
 }
 
-/*void invSort(vector<item> inventoryRaw) //Sorts the vector of item structs
-http://stackoverflow.com/questions/18759920/sort-vector-of-structs-by-a-variable-within-the-struct*/
+searchResult binarySearch(vector<item> &itemList, string searchTerm){
+    int mid, low = 0, high = itemList.size()-1;
+    searchResult result;
+    if(low > high){
+        cout << "binarySearch failed! Inventory is probably empty.";
+        result.found = false;
+        result.location = -1; //This should never happen. -1 allows for error handling if necessary
+    }
 
-/*void placeItem(newItem, inventoryVector[])
-{
-item newItem
-vector<item> inventoryVector[]
-tuple locTuple<bool, int>
-
-if (newItem.sku <= (inventoryVector.size/2))
-    locTuple = findPlaceFirst(newItem.sku, inventoryVector[]);
-else if (newItem.sku > (inventoryVector.size/2))
-    locTuple = findPlaceLast(newItem.sku, inventoryVector[]);
-else if inventoryVector.size == 0)
-    inventoryVector[0] = newItem
-
-if (<0>locTuple == true)
-    inventoryVector[<1>locTuple].qty++
-else
-    inventoryVector.insert(newItem, <1>locTuple)
+    while(low <= high){
+        mid  = (low + high)/2;
+        if(itemList[mid].sku == searchTerm){
+            result.found = true;
+            result.location = mid;
+            return result;
+        }
+        else if(itemList[mid].sku < searchTerm)
+            low = mid + 1;
+        else
+            high = mid - 1;
+    }
+    result.found = false;
+    result.location = mid;
+    return result;
 }
 
-/*tuple findPlaceLast(int searchTerm, list <inventoryStruct>) //Helper function to find place for new item starting at end of vector
-for (int i=list.end; i >= list.start; i--){
-if(list[i].sku == searchTerm
-    return make_tuple<true, i>;
-else (list[i].sku < searchTerm
-    return make_tuple<false, ++i>
+void placeItem(vector<item> &targetList, item newItem){
+    searchResult result = binarySearch(targetList, newItem.sku);
+
+    if(newItem.sku > targetList[result.location].sku)
+        targetList.insert(targetList.begin()+result.location+1, newItem); //Places item after the result of binarySearch
+    else
+        targetList.insert(targetList.begin()+result.location, newItem); //Places item before the result of binarySearch
+    return;
 }
-*/
 
-/*tuple findPlaceFirst //Helper function to find place for new item starting at beginning of vector
-for (int i=list.start; i <= list.end; i++){
-if(list[i].sku == searchTerm
-    return make_tuple<true, i>;
-else (list[i].sku > searchTerm
-    return make_tuple<false, i>
-}*/
+void rowFormat(item output){ //Formats the data into neat and tidy columns. Column widths should probably be enforced during item entry to avoid overflow
+    cout << setw(12) << output.sku << setw(20) << output.description << setw(10)
+         << setprecision(2) << fixed <<output.price << setw(5) <<output.qtyOnHand;
+    return;
+}
 
-char charCast(string input, int maxOptions) //custom charcast with robust error handling
-{
+char charCast(string input, int maxOptions){ //custom charcast with robust error handling
+
     char error = maxOptions + 1; //out of bound value that will trigger the default switch case
     char result;
     int menuInt = atoi(input.c_str()); //convert input to integer value
