@@ -1,4 +1,4 @@
-//                     ******INVENTORY MANAGEMENT PROGRAM******
+//                     ******INVENTORY MANAGEMENT PROGRAM******             Last Update: 5/2/17
 /* This program provides a means to opening, editing, and reviewing a .csv inventory file.
 The .csv file type was selected for its nearly universal compatibility, allowing the inventory
 files to be opened and edited in most spreadsheet programs such as Google Sheets and MS Excel. */
