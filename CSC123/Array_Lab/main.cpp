@@ -151,6 +151,7 @@ string fileOpen(vector<item>& invVector){ // Case 1: Loads a selected file into 
         outStream.close();
         return realFileName;
     }
+    invVector.clear(); //Prepares the inventory vector to receive file data
     fileLoad(invVector, inStream); //Passes invVector to load data from file
     sortInventory(invVector); //Sorts inventory vector
     inStream.close();
@@ -160,7 +161,6 @@ string fileOpen(vector<item>& invVector){ // Case 1: Loads a selected file into 
 
 void itemSearch(vector<item> &itemList){ //Case 2: Searches for an item in the inventory vector
     string sku;
-    int matchAddress;
     searchResult isFound;
 
     cout << "\n*** Menu: Item Search ***\n";
@@ -182,7 +182,7 @@ void itemSearch(vector<item> &itemList){ //Case 2: Searches for an item in the i
 void addItem(vector<item> &itemList){ //Case 3: Add an item to inventory
 
     item newItem;
-    int newQty, itemAddress;
+    int newQty;
     string inputBuffer, overwrite;
     searchResult foundItem;
 
@@ -190,7 +190,7 @@ void addItem(vector<item> &itemList){ //Case 3: Add an item to inventory
     cout << "Enter item number:";
     getline(cin, newItem.sku);
     foundItem = binarySearch(itemList, newItem.sku); //Check if item already in inventory
-    if (foundItem.found = true){ //This if() can be removed if duplicate SKU's are allowed BUT itemSearch results would be ambiguous!
+    if (foundItem.found == true){ //This if() can be removed if duplicate SKU's are allowed BUT itemSearch results would be ambiguous!
         cout << "Item already exists in inventory! /n";
         //cout << itemList[foundItem.location].description; //debug
         rowFormat(itemList[foundItem.location]);
@@ -324,7 +324,7 @@ void sortInventory(vector<item>& rawList){ //Bubble sort that catches matching i
             if(compareResult > 0)
                 itemSwap(rawList, j, j+1);
             else if(compareResult = 0){ //Really ought to have conflict resolution (price? description?) but beyond the scope of this version
-                rawList[j].qtyOnHand = rawList[j].qtyOnHand + rawList[j+1].qtyOnHand;
+                rawList[j].qtyOnHand = (rawList[j].qtyOnHand + rawList[j+1].qtyOnHand);
                 rawList.erase(rawList.begin()+j+1);
             }
         }
@@ -338,7 +338,7 @@ int itemCompare(const struct item &x, const struct item &y){ //compare SKU's of 
         return 0;
     else if (x.sku < y.sku)
         return -1;
-    else if (x.sku > y.sku)
+    else
         return 1;
 }
 
@@ -356,9 +356,9 @@ searchResult binarySearch(vector<item> &itemList, string searchTerm){
     int mid, low = 0, high = itemList.size()-1;
     searchResult result;
     if(low > high){
-        cout << "binarySearch failed! Inventory is probably empty.";
+        //cout << "binarySearch failed! Inventory is probably empty.";
         result.found = false;
-        result.location = -1; //This should never happen. -1 allows for error handling if necessary
+        result.location = -1; //This should only happen if the inventory is empty
     }
 
     while(low <= high){
