@@ -1,4 +1,4 @@
-//                     ******INVENTORY MANAGEMENT PROGRAM******             Last Update: 5/2/17
+//                     ******INVENTORY MANAGEMENT PROGRAM******       Ver 2.0 Last Update: 5/2/17
 /* This program provides a means to opening, editing, and reviewing a .csv inventory file.
 The .csv file type was selected for its nearly universal compatibility, allowing the inventory
 files to be opened and edited in most spreadsheet programs such as Google Sheets and MS Excel. */
@@ -7,7 +7,7 @@ files to be opened and edited in most spreadsheet programs such as Google Sheets
 #include <fstream> //Needed for file manip
 #include <string>
 #include <cstring> //strncmp used in sort function
-#include <iomanip> //Used in rowFormat
+#include <iomanip> //Doesn't look like this is needed
 #include <stdlib.h> //Needed for casting types
 #include <vector> //Crucial lib for all the operations!
 #include <sstream> //Used in fileLoad to parse item data
@@ -182,12 +182,11 @@ void itemSearch(vector<item> &itemList){ //Case 2: Searches for an item in the i
 void addItem(vector<item> &itemList){ //Case 3: Add an item to inventory
 
     item newItem;
-    int newQty;
     string inputBuffer, overwrite;
     searchResult foundItem;
 
     cout << "*** Menu: Add Item ***" << endl;
-    cout << "Enter item number:";
+    cout << "Enter item number: ";
     getline(cin, newItem.sku);
     foundItem = binarySearch(itemList, newItem.sku); //Check if item already in inventory
     if (foundItem.found == true){ //This if() can be removed if duplicate SKU's are allowed BUT itemSearch results would be ambiguous!
@@ -199,17 +198,14 @@ void addItem(vector<item> &itemList){ //Case 3: Add an item to inventory
         if (overwrite != "y" && overwrite != "Y")
             return;
     }
-    cout << "Enter item description:";
+    cout << "Enter item description: ";
     getline(cin, newItem.description);
-    cout << "Enter item price:";
+    cout << "Enter item price: $";
     getline(cin, inputBuffer);
     newItem.price = atof(inputBuffer.c_str());
-    cout << "Enter number of new units to add to inventory:";
+    cout << "Enter number of units: ";
     getline(cin, inputBuffer);
-    newQty = atoi(inputBuffer.c_str());
-    cout << "New Quantity: " << newQty << endl;
-    cout << "prior qtyOnHand: " << newItem.qtyOnHand << endl;
-    newItem.qtyOnHand = newQty;
+    newItem.qtyOnHand = atoi(inputBuffer.c_str());
     cout << "New item Qty" << newItem.qtyOnHand << endl;
     //itemList.push_back(newItem); //Debug
     placeItem(itemList, newItem);
@@ -381,7 +377,9 @@ searchResult binarySearch(vector<item> &itemList, string searchTerm){
 void placeItem(vector<item> &targetList, item newItem){
     searchResult result = binarySearch(targetList, newItem.sku);
 
-    if(newItem.sku > targetList[result.location].sku)
+    if(newItem.sku == targetList[result.location].sku)
+        targetList[result.location] = newItem; //Overwrites item if duplicate
+    else if(newItem.sku > targetList[result.location].sku)
         targetList.insert(targetList.begin()+result.location+1, newItem); //Places item after the result of binarySearch
     else
         targetList.insert(targetList.begin()+result.location, newItem); //Places item before the result of binarySearch

@@ -1,0 +1,11 @@
+# depslib dependency file v1.0
+1493789115 source:c:\school\csc123\array_lab\main.cpp
+	<iostream>
+	<fstream>
+	<string>
+	<cstring>
+	<iomanip>
+	<stdlib.h>
+	<vector>
+	<sstream>
+
