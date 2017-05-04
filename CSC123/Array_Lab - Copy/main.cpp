@@ -1,7 +1,10 @@
-//                     ******INVENTORY MANAGEMENT PROGRAM******       Ver 2.0 Last Update: 5/2/17
+//                     ******INVENTORY MANAGEMENT PROGRAM******       Ver 2.0.1 Last Update: 5/2/17
 /* This program provides a means to opening, editing, and reviewing a .csv inventory file.
 The .csv file type was selected for its nearly universal compatibility, allowing the inventory
 files to be opened and edited in most spreadsheet programs such as Google Sheets and MS Excel. */
+
+//If overwrite risk,  prompt for file name with a do while overwrite == false
+
 
 #include <iostream>
 #include <fstream> //Needed for file manip
@@ -28,12 +31,12 @@ struct searchResult{ //holds found and location values for binarySearch;
 
 //MENU FUNCTIONS
 int totalInvOnHand(vector<item>&); //Used on main menu screen to show total number of items on hand
-string fileOpen(vector<item>&); //Case 1: Opens working file
+void fileOpen(vector<item>&); //Case 1: Opens working file
 void itemSearch(vector<item>&); //Case 2: Searches for an item in the inventory vector
 void addItem(vector<item>&); //Case 3: Adds item to inventory vector
 void showInventory(vector<item>&); //Case 4: Shows all items in inventory vector
 void inventoryValue(vector<item>&); //Case 5: Shows current inventory value
-void saveFile(vector<item>&, string); //Case 6: Saves file to disk
+void saveFile(vector<item>&); //Case 6: Saves file to disk
 
 //HELPER FUNCTIONS
 void fileLoad(vector<item>&, ifstream&); //Loads file into memory and returns name of working file
@@ -44,18 +47,19 @@ void itemSwap(vector<item>&, int, int); //Swap function for sorting
 searchResult binarySearch(vector<item>&, string);//Binary search
 void rowFormat(item); //Format item output into legible columns
 void placeItem(vector<item>&, item); //Figures out where to place the new item so vector doesn't have to be sorted again
+bool binaryYN(); //Evaluates y/n string and returns true or false
+bool fileExists(string); //Checks to see if a file exists
 
 int main()
 {
     string menuChoiceStr, fileName;
     char menuChoiceChar;
     bool exit = false;
-    bool isOpen = false;
     vector<item> inventory;
 
     do {
-        cout << "\n                  *** Main Menu ***" << endl;
-        cout << "\tPlease select from one of the following options:\n"
+        cout << "                  *** Main Menu ***" << endl;
+        cout << "Please select from one of the following options:\n"
                 "\t1) Open an inventory file\n"
                 "\t2) Search for an item\n"
                 "\t3) Add an item to inventory\n"
@@ -65,61 +69,48 @@ int main()
                 "\t7) Exit Program\n\n";
 
         //Display stats for current file
-        if(isOpen == false)
-            cout << "No inventory file has been opened. Inventory Quantity is unavailable." << endl;
-        else {
-            cout << "Current Working File: " << fileName << endl;
             cout << "Total quantity of all items in inventory: " <<totalInvOnHand(inventory) << endl;
-        }
 
         //Main Menu
         cout << "Enter Your Selection: ";
         getline(cin, menuChoiceStr);
-        menuChoiceChar = charCast(menuChoiceStr, 7); //Ye Olde cast-char-to-string function now improved to handle different number of menu options (7 in this case)
+        menuChoiceChar = charCast(menuChoiceStr, 7); //Validates menu choice and casts to char to use in switch. 7 indicate the number of menu options
         switch (menuChoiceChar){
-            case '1': //Open file or create one if file name doesn't exist
-                fileName = fileOpen(inventory);
-                if(fileName == "")
-                    break;
-                isOpen = true;
+            case '1': //Open inventory file
+                fileOpen(inventory);
                 break;
             case '2': //Search for item in inventory
-                if(isOpen == false){
-                    cout << "Please open a file first.\n" << endl;
+                if(inventory.size() == 0){
+                    cout << "No items in inventory!" << endl;
                     break;
                 }
                 else
                     itemSearch(inventory);
                 break;
             case '3': //Add item to inventory
-                if(isOpen == false){
-                    cout << "Please open a file first.\n" << endl;
-                    break;
-                }
-                else
-                    addItem(inventory);
+                addItem(inventory);
                 break;
             case '4': //Show current inventory
-                if(isOpen == false){
-                    cout << "Please open a file first.\n" << endl;
+                if(inventory.size() == 0){
+                    cout << "No items in inventory!" << endl;
                     break;
                 }
                 else
                     showInventory(inventory);
                 break;
             case '5': //Calculate the total value on hand (Sum of qty*price)
-                if(isOpen == false){
-                    cout << "Please open a file first.\n" << endl;
-                    break;}
+                if(inventory.size() == 0){
+                   cout << "No items in inventory!" << endl;
+                   break;}
                 else
                     inventoryValue(inventory);
                 break;
             case '6': //Save memory to db file (This should also clear the memory)
-                if(isOpen == false){
-                    cout << "Please open a file first.\n" << endl;
+                if(inventory.size() == 0){
+                    cout << "No items in inventory!\n" << endl;
                     break;}
                 else
-                    saveFile(inventory, fileName);
+                    saveFile(inventory);
                 break;
             case '7': //Exit program
                 cout << "Exiting Program\n";
@@ -132,31 +123,26 @@ int main()
 }
 
 // Menu Functions
-string fileOpen(vector<item>& invVector){ // Case 1: Loads a selected file into memory for edit/review
+void fileOpen(vector<item>& invVector){ // Case 1: Loads a selected file into memory for edit/review
     string fileNameStr, realFileName;
     ifstream inStream;
     ofstream outStream;
 
+    cout << "\n*** Menu: Open File ***\n";
     cout << "Please enter the name of the file without extension: ";
     getline(cin, fileNameStr);
     realFileName = fileNameStr + ".csv";
     inStream.open(realFileName);
     if(inStream.fail()){
-        outStream.open(realFileName);
-        if (outStream.fail()){
-            cout << "Invalid file name." << endl << endl;
-            return "";
-        }
-        cout << "File not found. New inventory file " << realFileName << " has been created.\n";
-        outStream.close();
-        return realFileName;
+        cout << "File not found.";
+        return ;
     }
     invVector.clear(); //Prepares the inventory vector to receive file data
     fileLoad(invVector, inStream); //Passes invVector to load data from file
     sortInventory(invVector); //Sorts inventory vector
     inStream.close();
     cout << realFileName << " has been opened and sorted successfully!\n";
-    return realFileName;
+    return;
 }
 
 void itemSearch(vector<item> &itemList){ //Case 2: Searches for an item in the inventory vector
@@ -190,12 +176,11 @@ void addItem(vector<item> &itemList){ //Case 3: Add an item to inventory
     getline(cin, newItem.sku);
     foundItem = binarySearch(itemList, newItem.sku); //Check if item already in inventory
     if (foundItem.found == true){ //This if() can be removed if duplicate SKU's are allowed BUT itemSearch results would be ambiguous!
-        cout << "Item already exists in inventory! /n";
+        cout << "Item already exists in inventory! \n";
         //cout << itemList[foundItem.location].description; //debug
         rowFormat(itemList[foundItem.location]);
-        cout << "If you continue, existing item data will be overwritten. Do you wish to continue (Y/N)?";
-        getline(cin, overwrite);
-        if (overwrite != "y" && overwrite != "Y")
+        cout << "If you continue, existing item data will be overwritten.\n";
+        if (binaryYN() == false)
             return;
     }
     cout << "Enter item description: ";
@@ -242,11 +227,25 @@ void inventoryValue(vector<item> &itemList){ //Case 5: Show current inventory va
     return;
 }
 
-void saveFile(vector<item> &itemList, string workingFile){ //Case 6: Saves inventory vector to disk using working file name
+void saveFile(vector<item> &itemList){ //Case 6: Saves inventory vector to disk using working file name
+    string fileName, realFileName;
     ofstream outStream;
-    outStream.open(workingFile);
+    bool overwrite;
 
-    //Print column labels to file
+    cout << "\n*** Menu: Save File ***\n";
+    do{
+        cout << "Enter file name without extension: " << endl;
+        getline(cin, fileName);
+        realFileName = fileName + ".csv";
+        //does this file exist?
+        if (fileExists(realFileName)==true){
+           cout << "This file already exists!\n";
+           overwrite = binaryYN();
+        }
+    }while (overwrite==false);
+    outStream.open(realFileName);
+        cout << realFileName << " has been saved.\n";
+        outStream.close();//Print column labels to file
     outStream << "SKU" << "," << "DESCRIPTION" << "," << "PRICE" << "," << "QUANTITY" << endl;
 
     //Print inventory vector to file
@@ -311,7 +310,7 @@ void fileLoad (vector<item> &itemList, ifstream& inputFile){ //Helper function t
     return;
 }
 
-void sortInventory(vector<item>& rawList){ //Bubble sort that catches matching items
+void sortInventory(vector<item>& rawList){ //Bubble sort that catches duplicates
     int compareResult;
 
     for(int i=rawList.size()-1; i>0; i--){
@@ -319,7 +318,7 @@ void sortInventory(vector<item>& rawList){ //Bubble sort that catches matching i
             compareResult = strcmp(rawList[j].sku.c_str(), rawList[j+1].sku.c_str());
             if(compareResult > 0)
                 itemSwap(rawList, j, j+1);
-            else if(compareResult = 0){ //Really ought to have conflict resolution (price? description?) but beyond the scope of this version
+            else if(compareResult == 0){ //Merges duplicate items by summing their quantities and deleting Really ought to have conflict resolution (price? description?) but beyond the scope of this version
                 rawList[j].qtyOnHand = (rawList[j].qtyOnHand + rawList[j+1].qtyOnHand);
                 rawList.erase(rawList.begin()+j+1);
             }
@@ -408,4 +407,27 @@ char charCast(string input, int maxOptions){ //custom charcast with robust error
         }
     return error; //Any value outside 1-4 is invalid and triggers the error message
 }
+
+bool binaryYN(){ //Check Y/N, return bool
+    string userChoice;
+    bool confirm, invalidEntry;
+
+    do{
+        cout << "Do you wish to continue (Y/N)?\n";
+        getline(cin, userChoice);
+        if (userChoice == "y" || userChoice == "Y")
+            return true;
+        else if (userChoice == "n" || userChoice == "N")
+            return false;
+        else{
+            invalidEntry = true;
+            cout << "Invalid Entry. Please try again.\n";
+        }
+    }while (invalidEntry == true);
+}
+
+bool fileExists(string fileName){
+    return ifstream(fileName);
+}
+
 
