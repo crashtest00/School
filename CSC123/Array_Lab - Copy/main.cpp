@@ -1,10 +1,7 @@
-//                     ******INVENTORY MANAGEMENT PROGRAM******       Ver 2.0.1 Last Update: 5/2/17
+//                     ******INVENTORY MANAGEMENT PROGRAM******       Ver 2.0.2 Last Update: 5/3/17
 /* This program provides a means to opening, editing, and reviewing a .csv inventory file.
 The .csv file type was selected for its nearly universal compatibility, allowing the inventory
 files to be opened and edited in most spreadsheet programs such as Google Sheets and MS Excel. */
-
-//If overwrite risk,  prompt for file name with a do while overwrite == false
-
 
 #include <iostream>
 #include <fstream> //Needed for file manip
@@ -412,18 +409,17 @@ bool binaryYN(){ //Check Y/N, return bool
     string userChoice;
     bool confirm, invalidEntry;
 
-    do{
-        cout << "Do you wish to continue (Y/N)?\n";
-        getline(cin, userChoice);
-        if (userChoice == "y" || userChoice == "Y")
-            return true;
-        else if (userChoice == "n" || userChoice == "N")
-            return false;
-        else{
-            invalidEntry = true;
-            cout << "Invalid Entry. Please try again.\n";
-        }
-    }while (invalidEntry == true);
+    cout << "Do you wish to continue (Y/N)?\n";
+    getline(cin, userChoice);
+    if (userChoice == "y" || userChoice == "Y")
+        return true;
+    else if (userChoice == "n" || userChoice == "N")
+        return false;
+    else{
+        invalidEntry = true;
+        cout << "Invalid Entry. Please try again.\n";
+        binaryYN();
+    }
 }
 
 bool fileExists(string fileName){
