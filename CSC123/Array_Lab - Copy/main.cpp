@@ -4,12 +4,12 @@ The .csv file type was selected for its nearly universal compatibility, allowing
 files to be opened and edited in most spreadsheet programs such as Google Sheets and MS Excel. */
 
 #include <iostream>
-#include <fstream> //Needed for file import/export
-#include <string>
-#include <cstring> //strncmp used in sort function
-#include <iomanip>
-#include <stdlib.h> //Needed for casting types
 #include <vector>
+#include <string>
+#include <fstream> //Needed for file import/export
+#include <cstring> //strncmp used in sort function
+#include <iomanip> //Is this still required?
+#include <stdlib.h> //Needed for casting variable types
 #include <sstream> //Used in fileLoad to parse item data
 
 using namespace std;
