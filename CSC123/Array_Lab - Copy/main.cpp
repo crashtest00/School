@@ -7,7 +7,7 @@ files to be opened and edited in most spreadsheet programs such as Google Sheets
 #include <fstream> //Needed for file import/export
 #include <string>
 #include <cstring> //strncmp used in sort function
-#include <iomanip> 
+#include <iomanip>
 #include <stdlib.h> //Needed for casting types
 #include <vector>
 #include <sstream> //Used in fileLoad to parse item data
@@ -27,23 +27,23 @@ struct searchResult{ //holds found and location values for binarySearch;
 };
 
 //MENU FUNCTIONS
-int totalInvOnHand(vector<item>&); //Used on main menu screen to show total number of items on hand
 void fileOpen(vector<item>&); //Case 1: Opens an existing file
 void itemSearch(vector<item>&); //Case 2: Searches for an item in the inventory vector
 void addItem(vector<item>&); //Case 3: Adds item to inventory vector
 void showInventory(vector<item>&); //Case 4: Shows all items in inventory vector
 void inventoryValue(vector<item>&); //Case 5: Shows current inventory value
 void saveFile(vector<item>&); //Case 6: Saves file to disk
+int totalInvOnHand(vector<item>&); //Used on main menu screen to show total number of items on hand
 
 //HELPER FUNCTIONS
 void fileLoad(vector<item>&, ifstream&); //Loads file into memory and returns name of working file
-char charCast(string, int);//Checks input string for valid char value, then returns the valid char value
 void sortInventory(vector<item>&); //Bubble sort is used to catch and handle duplicate sku's
 int itemCompare(const struct item&, const struct item&); //x=y: 0, x<y: -1, x>y: 1
 void itemSwap(vector<item>&, int, int); //Swap function for sorting
 searchResult binarySearch(vector<item>&, string);//Binary search
-void rowFormat(item); //Format item output into legible columns
 void placeItem(vector<item>&, item); //Figures out where to place the new item so vector doesn't have to be sorted again
+void rowFormat(item); //Format item output into legible columns
+char charCast(string, int);//Checks input string for valid char value, then returns the valid char value
 bool binaryYN(); //Evaluates y/n string and returns true or false
 bool fileExists(string); //Checks to see if a file exists
 
@@ -265,9 +265,6 @@ void saveFile(vector<item> &itemList){ //Case 6: Saves inventory vector to disk 
     return;
 }
 
-
-//HELPER FUNCTIONS
-
 int totalInvOnHand(vector<item> &itemList) { //iterate through the vector and add qtys very similar to the price function
     int totalQty = 0;
     if (itemList.size() == 0)
@@ -279,6 +276,9 @@ int totalInvOnHand(vector<item> &itemList) { //iterate through the vector and ad
     }
     return totalQty;
 }
+
+//HELPER FUNCTIONS
+
 
 void fileLoad (vector<item> &itemList, ifstream& inputFile){ //Helper function to load file contents into memory
     vector<string> itemBuffer;
