@@ -1,14 +1,27 @@
+/* Words with Ken! A super fun game where you enter a word and get points based on letter values. Consecutive matching letters earn double points!
+Couple of notes:
+- The dictionary is sorted because even though it's alphabetical, C++ orders uppercase ahead of lowercase, so binarySearch failed on many lowercase words
+
+- std::sort was used because it's supposedly very fast compared to other sort solutions
+
+- Timsort was evaluated and rejected due to complexity. Bitwise operations made my head hurt and I didn't want to blatantly copy the code I found for it.
+Otherwise, due to the mostly sorted nature of the dictionary, it probably would have be faster than std::sort
+
+- Sorting the dictionary prioritizes multiple rounds in a single session. Assuming 2 rounds, sort and binarySearch is faster than a basic iterative search
+*/
+
 #include <iostream>
 #include <vector>
 #include <list>
 #include <fstream>
 #include <string>
+#include <algorithm>
 
 using namespace std;
 
 bool isWord(vector<string>&, string); //checks to see if a word is in the dictionary
+void loadDict(vector<string>&); //Loads dictionary file into vector
 int checkScore(string); //checks score
-void loadDict(vector<string>&);
 int isMatch(char);
 bool isPoint(vector<char>, char);
 bool binaryYN();
@@ -38,12 +51,14 @@ int main()
     vector<string> dictionary;
 
     loadDict(dictionary);
+    sort(dictionary.begin(), dictionary.end()); //Sorts dictionary so binarySearch works properly
+    //cout << "Dictionary has been sorted!\n"; //debug
 
     do{
         cout << "Enter a single word with no spaces: \n";
         getline(cin, word); // what if the user enters a space?
         if (isWord(dictionary, word) == false)
-            cout << "\nI'm afraid it appears you made that word up. I award you no points. May God have mercy on your soul.\n";
+            cout << "\nI'm afraid it appears you made that word up. I award you no points.\n";
         else{
             score = checkScore(word);
             cout << "Your score is: " << score << "!" << endl;
@@ -56,17 +71,18 @@ int main()
 }
 
 void loadDict(vector<string> &target){ //Loads dictionary into vector
-    cout << "\nOpening dictionary file\n";
+    //cout << "\nOpening dictionary file\n"; //debug
     ifstream inStream;
     string strBuffer;
-    inStream.open("web2-Short.txt");
+    inStream.open("web2.txt");
 
-    cout << "Loading dictionary file\n";
+    //cout << "Loading dictionary file\n"; //debug
     while(!inStream.eof()){
         getline(inStream, strBuffer); //Get word from dictionary file
         target.push_back(strBuffer); //add word to dictionary vector
     }
-    cout << "Dictionary loaded successfully!\n";
+    //cout << "Dictionary loaded successfully!\n"; //debug
+    //cout << "Dictionary size: " << target.size() << endl; //debug
     return;
 }
 
@@ -74,14 +90,18 @@ bool isWord(vector<string> &wordList, string word){
     int mid, low = 0, high = wordList.size()-1;
     bool result = false;
     if(low > high){
-        cout << "isWord failed! Dictionary is probably empty.";
+        cout << "isWord failed! Something is definitely wrong. Is dictionary empty?\n";
         result = false;
     }
 
     while(low <= high){
         mid  = (low + high)/2;
-        if(wordList[mid] == word)
+        // cout << mid << wordList[mid] << endl; //debug
+        if(wordList[mid] == word){
+            //cout << "word was found!"; //debug
             result = true;
+            return result;
+        }
         else if(wordList[mid] < word)
             low = mid + 1;
         else
@@ -135,7 +155,7 @@ int isMatch(char searchTerm){
     return charScore;
 }
 
-bool binaryYN(){ //Check Y/N, return bool
+bool binaryYN(){ //Function for basic Y/N user prompts
     string userChoice;
     //bool invalidEntry;
 

@@ -1,8 +1,9 @@
 # depslib dependency file v1.0
-1493954293 source:c:\school\csc123\string_lab\main.cpp
+1494043483 source:c:\school\csc123\string_lab\main.cpp
 	<iostream>
 	<vector>
 	<list>
 	<fstream>
 	<string>
+	<algorithm>
 
