@@ -49,7 +49,7 @@ bool fileExists(string); //Checks to see if a file exists
 
 int main()
 {
-    string menuChoiceStr, fileName;
+    string menuChoiceStr;
     char menuChoiceChar;
     bool exit = false;
     vector<item> inventory;
@@ -69,10 +69,10 @@ int main()
             cout << "Total quantity of all items in inventory: " <<totalInvOnHand(inventory) << endl;
 
         //Main Menu
-        cin.clear(); //Bug fix: input buffer had non-char remnants triggering default switch case. Inconsistent in xcode, couldn't replicate bug in C:B
+        cin.clear(); //Bug fix: input buffer would sometimes retain non-char remnants triggering default switch case. Found bug in xcode, couldn't replicate in C:B
         cout << "Enter Your Selection: ";
         getline(cin, menuChoiceStr);
-        menuChoiceChar = charCast(menuChoiceStr, 7); //Validates menu choice and casts to char to use in switch. 7 indicate the number of menu options
+        menuChoiceChar = charCast(menuChoiceStr, 7); //Validates menu choice and casts to char to use in switch. 7 indicates the number of menu options
         switch (menuChoiceChar){
             case '1': //Open inventory file
                 fileOpen(inventory);
@@ -195,12 +195,12 @@ void addItem(vector<item> &itemList){ //Case 3: Add an item to inventory
     if (itemList.size() == 0) //Cannot use placeItem function if inventory vector is empty
         itemList.push_back(newItem);
     else
-        placeItem(itemList, newItem); //Placing item in proper location using binarySearch is probably faster than using bubble sort
+        placeItem(itemList, newItem); //Placing item in proper location using binarySearch is probably faster than using sorting after every entry
     cout << "\nItem was added successfully!\n\n";
     return;
     }
 
-void showInventory(vector<item> &itemList){ //Case 4: Lists inventory in memory (If file is open)
+void showInventory(vector<item> &itemList){ //Case 4: Lists inventory in memory
     cout << "\n            *** List Inventory ***\n";
      cout << setw(12) << "Item Number" << setw(20) << "Description" << setw(10)
           << "Price" << setw(5) << "Qty" << endl;
@@ -230,7 +230,7 @@ void inventoryValue(vector<item> &itemList){ //Case 5: Show current inventory va
     return;
 }
 
-void saveFile(vector<item> &itemList){ //Case 6: Saves inventory vector to disk using working file name
+void saveFile(vector<item> &itemList){ //Case 6: Saves inventory vector to disk
     string fileName, realFileName;
     ofstream outStream;
     bool overwrite, clearMem;
@@ -265,7 +265,7 @@ void saveFile(vector<item> &itemList){ //Case 6: Saves inventory vector to disk 
     return;
 }
 
-int totalInvOnHand(vector<item> &itemList) { //iterate through the vector and add qtys very similar to the price function
+int totalInvOnHand(vector<item> &itemList) { //iterate through the vector and add qtys, display total number of units on hand
     int totalQty = 0;
     if (itemList.size() == 0)
         return totalQty;
@@ -292,18 +292,18 @@ void fileLoad (vector<item> &itemList, ifstream& inputFile){ //Helper function t
             // cout << "strBuffer is: " << strBuffer; //DEBUG
             rowData << strBuffer;
             // cout << "\nRow data is: " << rowData << endl; //DEBUG
-            while(rowData.good()){ //Parse row of data into separate bits
+            while(rowData.good()){ //Parse row of data into separate strings
                 getline(rowData, metaBuffer, ',');
                 // cout << "metaBuffer is: " << metaBuffer << endl; // DEBUG
                 itemBuffer.push_back(metaBuffer);
             }
 
-            if(itemBuffer.size() != 4){ //Make sure item has all necessary details!
+            if(itemBuffer.size() != 4){ //Makes sure item has all necessary details!
                 cout << "\nFile is incompatible or corrupt. Item was found with missing data!\n" << itemBuffer.size() << endl;
                 return;
             }
 
-            else if (itemBuffer[0] == "SKU") //Skip header row
+            else if (itemBuffer[0] == "SKU") //Skips header row
                 itemBuffer.clear();
 
             else {
@@ -337,26 +337,21 @@ void sortInventory(vector<item>& rawList){ //Bubble sort that catches duplicates
 }
 
 int itemCompare(const struct item &x, const struct item &y){ //compare SKU's of two items
-    cout << "x sku = " << x.sku << " y sku = " << y.sku;
-    if(x.sku == y.sku)
-        return 0;
-    else if (x.sku < y.sku)
-        return -1;
-    else
-        return 1;
+    cout << "x sku = " << x.sku << " y sku = " << y.sku; //debug
+    return (x.sku-y.sku);
 }
 
-void itemSwap(vector<item>& swapVector, int a, int b) { //Swap a and b in the vector argument
+void itemSwap(vector<item>& swapVector, int x, int y) { //Swap x and y in the vector argument
     item tempItem;
 
-    //cout << "\n a = " << a << " b = " << b; //debug
-    tempItem = swapVector[a];
-    swapVector[a] = swapVector[b];
-    swapVector[b] = tempItem;
+    //cout << "\n x = " << a << " y = " << y; //debug
+    tempItem = swapVector[x];
+    swapVector[x] = swapVector[y];
+    swapVector[y] = tempItem;
     return;
 }
 
-searchResult binarySearch(vector<item> &itemList, string searchTerm){
+searchResult binarySearch(vector<item> &itemList, string searchTerm){ //Search funtion, faster than simple iterative search
     int mid, low = 0, high = itemList.size()-1;
     searchResult result;
     if(low > high){
@@ -397,7 +392,7 @@ void placeItem(vector<item> &targetList, item newItem){
     return;
 }
 
-void rowFormat(item output){ //Formats the data into neat and tidy columns. Column widths should probably be enforced during item entry to avoid overflow
+void rowFormat(item output){ //Formats the data into neat and tidy columns. Column widths should probably be enforced during item entry to avoid overflow...
     cout << setw(12) << output.sku << setw(20) << output.description << setw(10)
          << setprecision(2) << fixed <<output.price << setw(5) <<output.qtyOnHand;
     return;
@@ -440,10 +435,11 @@ bool binaryYN(){ //Check Y/N, return bool
 bool fileExists(string fileName){
     if (ifstream(fileName).fail())
         return false;
+    cout << "ifstream = " << ifstream << endl; //Does this approach actually open the file?
     else{
         ifstream(fileName).close();
         return true;
     }
 }
 
-
+// Thngs to check. fileExists. Sort function. One more comment check.
