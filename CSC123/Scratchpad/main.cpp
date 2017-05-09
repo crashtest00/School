@@ -3,14 +3,12 @@
 
 using namespace std;
 
-int main() {
-int *p1, *p2;
-int int1, int2;
-bool test;
-int1 = 1;
-int2 = 1;
-p1 = &int1;
-p2 = &int2;
-test = *p1==*p2;
-cout << test;
+int main()
+{
+  cout << "\003" << endl;
+  cout << "\004" << endl;
+  cout << "\005" << endl;
+  cout << "\006" << endl;
+  return 0;
 }
+

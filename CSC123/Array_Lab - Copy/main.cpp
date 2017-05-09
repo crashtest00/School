@@ -1,4 +1,4 @@
-//                     ******INVENTORY MANAGEMENT PROGRAM******       Ver 2.0.7 Last Update: 5/4/17
+//                     ******INVENTORY MANAGEMENT PROGRAM******       Ver 2.0.8 Last Update: 5/7/17
 /* This program provides a means to opening, editing, and reviewing a .csv inventory file.
 The .csv file type was selected for its nearly universal compatibility, allowing the inventory
 files to be opened and edited in most spreadsheet programs such as Google Sheets and MS Excel. */
@@ -38,12 +38,11 @@ int totalInvOnHand(vector<item>&); //Used on main menu screen to show total numb
 //HELPER FUNCTIONS
 void fileLoad(vector<item>&, ifstream&); //Loads file into memory and returns name of working file
 void sortInventory(vector<item>&); //Bubble sort is used to catch and handle duplicate sku's
-int itemCompare(const struct item&, const struct item&); //x=y: 0, x<y: -1, x>y: 1
 void itemSwap(vector<item>&, int, int); //Swap function for sorting
 searchResult binarySearch(vector<item>&, string);//Binary search
-void placeItem(vector<item>&, item); //Figures out where to place the new item so vector doesn't have to be sorted again
+void placeItem(vector<item>&, item); //Figures out where to place the new item so vector doesn't have to be sorted when new item is added
 void rowFormat(item); //Format item output into legible columns
-char charCast(string, int);//Checks input string for valid char value, then returns the valid char value
+char charCast(string, int);//Checks input string for valid char value, then returns the valid char value. For use with switch menus that have max of 10 options
 bool binaryYN(); //Evaluates y/n string and returns true or false
 bool fileExists(string); //Checks to see if a file exists
 
@@ -303,7 +302,7 @@ void fileLoad (vector<item> &itemList, ifstream& inputFile){ //Helper function t
                 return;
             }
 
-            else if (itemBuffer[0] == "SKU") //Skips header row
+            else if (itemBuffer[0] == "SKU") //Makes sure header labels aren't imported into the inventory vector
                 itemBuffer.clear();
 
             else {
@@ -327,18 +326,13 @@ void sortInventory(vector<item>& rawList){ //Bubble sort that catches duplicates
             compareResult = strcmp(rawList[j].sku.c_str(), rawList[j+1].sku.c_str());
             if(compareResult > 0)
                 itemSwap(rawList, j, j+1);
-            else if(compareResult == 0){ //Merges duplicate items by summing their quantities and deleting Really ought to have conflict resolution (price? description?) but beyond the scope of this version
+            else if(compareResult == 0){ //Merges duplicate items by summing their quantities. Advanced conflict resolution is beyond the scope of this version
                 rawList[j].qtyOnHand = (rawList[j].qtyOnHand + rawList[j+1].qtyOnHand);
                 rawList.erase(rawList.begin()+j+1);
             }
         }
     }
     return;
-}
-
-int itemCompare(const struct item &x, const struct item &y){ //compare SKU's of two items
-    cout << "x sku = " << x.sku << " y sku = " << y.sku; //debug
-    return (x.sku-y.sku);
 }
 
 void itemSwap(vector<item>& swapVector, int x, int y) { //Swap x and y in the vector argument
@@ -351,7 +345,7 @@ void itemSwap(vector<item>& swapVector, int x, int y) { //Swap x and y in the ve
     return;
 }
 
-searchResult binarySearch(vector<item> &itemList, string searchTerm){ //Search funtion, faster than simple iterative search
+searchResult binarySearch(vector<item> &itemList, string searchTerm){ //Search function, faster than simple iterative search
     int mid, low = 0, high = itemList.size()-1;
     searchResult result;
     if(low > high){
@@ -381,8 +375,6 @@ searchResult binarySearch(vector<item> &itemList, string searchTerm){ //Search f
 void placeItem(vector<item> &targetList, item newItem){
     searchResult result;
     result = binarySearch(targetList, newItem.sku);
-    //cout << "Made it this far";
-    //cout << result.location;
     if(newItem.sku == targetList[result.location].sku)
         targetList[result.location] = newItem; //Overwrites item if duplicate
     else if(newItem.sku > targetList[result.location].sku)
@@ -392,32 +384,30 @@ void placeItem(vector<item> &targetList, item newItem){
     return;
 }
 
-void rowFormat(item output){ //Formats the data into neat and tidy columns. Column widths should probably be enforced during item entry to avoid overflow...
+void rowFormat(item output){ //Formats the data into neat and tidy columns.
     cout << setw(12) << output.sku << setw(20) << output.description << setw(10)
          << setprecision(2) << fixed <<output.price << setw(5) <<output.qtyOnHand;
     return;
 }
 
-char charCast(string input, int maxOptions){ //custom charcast with robust error handling
-
-    char error = maxOptions + 1; //out of bound value that will trigger the default switch case
+char charCast(string input, int maxOptions){ //custom string-to-char cast for using string input with switch menus (max 10 options)
+    char error = maxOptions + 1; //Any value outside 1-maxOptions is invalid and triggers the default switch case
     char result;
     int menuInt = atoi(input.c_str()); //convert input to integer value
 
-    if(input.length() != 1) //Length > 1 indicates invalid user entry
+    if(input.length() != 1) //Length > 1 indicates invalid user entry, assuming menu has fewer than 10 options
         return error;
-    for(int i = 1; i <= maxOptions; i++) //Checks to make sure user input is valid menu selection
+    for(int i = 1; i <= maxOptions; i++) //Checks to make sure user input is a valid menu selection
         if(menuInt == i)
         {
             result = menuInt + '0';
             return result;
         }
-    return error; //Any value outside 1-maxOptions is invalid and triggers the error message
+    return error;
 }
 
-bool binaryYN(){ //Check Y/N, return bool
+bool binaryYN(){ //Prompts the user for Y/N response, returns bool, includes invalid response handling
     string userChoice;
-    //bool invalidEntry;
 
     cout << "Enter (Y/N): ";
     getline(cin, userChoice);
@@ -426,20 +416,17 @@ bool binaryYN(){ //Check Y/N, return bool
     else if (userChoice == "n" || userChoice == "N")
         return false;
     else{
-        //invalidEntry = true;
         cout << "Invalid Entry. Please try again.\n";
-        return binaryYN();
+        return binaryYN(); //My First Recursive Function. Yay!
     }
 }
 
 bool fileExists(string fileName){
-    if (ifstream(fileName).fail())
+    if (ifstream(fileName).fail()){
         return false;
-    cout << "ifstream = " << ifstream << endl; //Does this approach actually open the file?
+    }
     else{
         ifstream(fileName).close();
         return true;
     }
 }
-
-// Thngs to check. fileExists. Sort function. One more comment check.

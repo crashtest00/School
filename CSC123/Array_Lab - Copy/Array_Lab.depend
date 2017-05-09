@@ -9,13 +9,13 @@
 	<vector>
 	<sstream>
 
-1493877253 source:c:\school\csc123\array_lab - copy\main.cpp
+1494192909 source:c:\school\csc123\array_lab - copy\main.cpp
 	<iostream>
-	<fstream>
+	<vector>
 	<string>
+	<fstream>
 	<cstring>
 	<iomanip>
 	<stdlib.h>
-	<vector>
 	<sstream>
 
