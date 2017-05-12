@@ -1,0 +1,10 @@
+# depslib dependency file v1.0
+1494577749 source:c:\csc123\object_lab_testing\main.cpp
+	<iostream>
+	<algorithm>
+	<vector>
+	<stdlib.h>
+	<iomanip>
+	<cstdlib>
+	<tuple>
+
