@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <iomanip>
 #include <cstdlib>
+#include <tuple>
 
 using namespace std;
 
@@ -11,6 +12,7 @@ using namespace std;
 //Where does the pretty card function go?
 //This is sort of in the middle of using a class for Hand and using a vector in main() for Hand
 //Should change cards to myCards or even myHand
+//Force a 5-card hand. Stick to the reqs
 
 class Card
 {
@@ -239,33 +241,77 @@ void Hand::showHand(){ //Loop through vector using the getCard function
 }
 
 string Hand::getScore(){ //Should this call a private rules function?
-    int straight;
-    int pair;
-    int ofKind;
-    int flush;
-    bool threeOfKind;
-    bool fourOfKind;
-    string resultBuffer;
+    //Use one for loop
+    //Track ofKind matches in the ofAKind tuple vector
+    //use ofAKind.push_back(make_tuple(numOfMatches, rank)
+    //Each iteration should increment the flush counter and the straight counter
+    //For straight logic, if last card is King and first card is Ace, straight++
+    //ofKind should initialize (and reset) at 1, since a card always matches itself
+    //Straight should also initialize to 1. No need to reset since only 5 triggers the straight result
     
-    for(int i=0; i<cards.size(); i++){
-    if(cards[i].suitInt == cards[i+1].suitInt)
-        flush++;	
-    if(cards[i].rankInt+1 == cards[i+1].rankInt)
-        straight++; //increment straight counter
-    else if (cards[i].rankInt == cards[i+1].rankInt)
-        ofKind++;
-        if (ofKind == 2) {
-            pair++;
-            resultBuffer = "Two" + cards[i].getRank() + "s";
-        }
-        else if (ofKind == 3) {
-            threeOfKind = true;
-            pair--;
-            resultBuffer = "Three" + cards[i].getRank()+"s";
-        }
-        else if (ofKind == 4) {fourOfKind = true; threeOfKind = false;}
+    int straight = 1; //A single card is a straight with length=1
+    int ofKindInt = 1; //A single card is 1 of a kind. Just like you. :)
+    int flush = 1; //A single card is a flush of 1
+    vector<tuple<int, string>> ofAKind; //Theoretical max size of 2, change this to an array? Pushback becomes array[1]
+    string result;
+    bool aceHigh = false;
     
+    //Evaluate hand
+    if (cards.front().rankInt == 1 && cards.back().rankInt ==13){ //Handling for Aces high. If King and Ace are present, straight length equals 2
+        straight++;
+        aceHigh = true;
     }
+    for(int i=0; i<cards.size(); i++){
+        if(cards[i].suitInt == cards[i+1].suitInt) //Check for suit match. Could be a straight, doesn't have to be.
+            flush++;
+        
+        //Evaluate for straight. Could be flush, doesn't have to be
+        if(cards[i].rankInt+1 == cards[i+1].rankInt){ //Check for straight
+            straight++; //increment straight counter
+            ofKindInt = 1; //Reinitialize
+        }
+
+        //Evaluate for ofKind. Cannot be straight and cannot be flush
+        else if (cards[i].rankInt == cards[i+1].rankInt){
+            ofKindInt++;
+            if(ofKindInt == 2)
+                ofAKind.push_back(make_tuple(ofKindInt,cards[i].getRank()));
+            else if(ofKindInt == 3) //Explicit check but could probably be combined with 4ofKind and changed to else
+                ofAKind.back() = make_tuple(ofKindInt,cards[i].getRank());
+            else if(ofKindInt == 4)
+                ofAKind.back() = make_tuple(ofKindInt,cards[i].getRank());
+        }
+    }
+    //Straight
+    if(straight==5){
+        if((cards.back().rankInt == 13) && (aceHigh == true))
+            result = "Ace-high straight";
+        else
+            result = cards.back().getRank() + "-high straight";
+        if (flush==5)
+            result = result + " flush!";
+    }
+    //Flush
+    else if(flush==5)
+        result = cards.back().getSuit() + " flush";
+    //Pair
+    else if ((get<0>(ofAKind[0]) == 2)&&(ofAKind.size()==1))
+        result = "Pair of " + get<1>(ofAKind[0]);
+    //Two Pair
+    else if ((get<0>(ofAKind[0])) + (get<0>(ofAKind[1])) == 4) //This has to be 2 pairs
+        result = "Pair of " + get<1>(ofAKind[0]) + " and pair of " + get<1>(ofAKind[1]);
+    //Three of a kind
+    else if ((get<0>(ofAKind[0]) == 2)&&(ofAKind.size()==1))
+    //Full House
+    else if ((get<0>(ofAKind[0])) + (get<0>(ofAKind[1])) == 5)
+        result = "Full house " front " over " back;
+    //Four of a kind
+    else if ((get<0>(ofAKind[0]) == 2)&&(ofAKind.size()==1))
+            
+    return result;
+}
+
+    //Translate results into human readable goodness
     if(flush==4)//Straight
         cout << cards[0].getSuit() << "flush";
     if(pair == 2)
