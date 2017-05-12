@@ -1,3 +1,9 @@
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+//                                   CRAZY GAME OF POKER: CSC123 EDITION
+//This game generates a deck of cards, deals a hand of 5-card stud, and evaluates the hand based on standard
+//poker rules.
+//
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 #include <iostream>
 #include <algorithm>
 #include <vector>
@@ -20,7 +26,7 @@ public:
     void add(int rank, int suit);
 
     //Accessor
-    string getRank(); //Needs to translate numbers into names for K, Q, J, A
+    string getRank(); //Translate numbers into names for K, Q, J, A
     string getSuit();
     string getCard(); //This is simply getRank + getSuit
 };
@@ -35,8 +41,8 @@ public:
     void clear();
 
     //Accessor
-    void showHand(); //Loop through vector using the getCard function
-    string getScore(); //Should this call a private rules function?
+    void showHand(); //Loop through vector and display contents using the getCard function
+    string getScore();
     void sortHand(); //Sorts the hand by rank
 
 private:
@@ -48,6 +54,7 @@ int randomSeed (int); //Random seed for shuffle function
 void shuffleDeck(vector<Card>&); //Shuffles the deck
 bool binaryYN();
 
+//THE GAME
 int main()
 {
     vector<Card> deck;
@@ -91,7 +98,7 @@ void buildDeck(vector<Card> &myDeck){ //Builds and displays the deck
     system("cls");
 }
 
-int randomSeed (int i) {return time(0)%i;} //Random seed function for shuffle
+int randomSeed (int i) {return (time(0)%i);} //Random seed function for shuffle
 
 void shuffleDeck(vector<Card> &myDeck){ //shuffles the deck
     random_shuffle(myDeck.begin(), myDeck.end(), randomSeed);
@@ -113,8 +120,7 @@ bool binaryYN(){ //Prompts the user for Y/N response, returns bool, includes inv
 }
 
 //Card class functions
-void Card::add(int rank, int suit) //Mutator: Add a card
-{
+void Card::add(int rank, int suit){//Mutator: Add a card
     if(rank >13 || rank < 1 || suit > 3 || suit < 0){
         cout << "Invalid card! Ending program.";
         exit(1);
@@ -125,8 +131,7 @@ void Card::add(int rank, int suit) //Mutator: Add a card
     }
 }
 
-string Card::getRank() //Accessor: Need to translate numbers into names for ace and face cards
-{
+string Card::getRank(){//Accessor: Translate rankInt into name strings
     switch (rankInt) {
         case 1:
             return "Ace";
@@ -173,8 +178,7 @@ string Card::getRank() //Accessor: Need to translate numbers into names for ace 
     }
 }
 
-string Card::getSuit() //Accessor: Convert suitInt to suit string
-{
+string Card::getSuit(){//Accessor: Convert suitInt to suit string
     switch (suitInt) {
         case 0:
             return "Hearts";
@@ -194,21 +198,18 @@ string Card::getSuit() //Accessor: Convert suitInt to suit string
     }
 }
 
-string Card::getCard() //This is simply getRank + getSuit
-{
+string Card::getCard(){//This is simply getRank + getSuit
     return (getRank() + " of " + getSuit());
 }
 
 //Hand class functions
-Hand::Hand()
-{
+Hand::Hand(){ //initializes an empty vector myHand
     vector<Card> cards;
-    myHand = cards; //initializes a vector myHand
+    myHand = cards;
 }
 
-void Hand::addCard(Card newCard)
-{
-    myHand.push_back(newCard); //Adds a card to the hand
+void Hand::addCard(Card newCard){ //Adds a card to the hand
+    myHand.push_back(newCard);
 
 }
 
@@ -219,18 +220,17 @@ void Hand::showHand(){ //Loop through vector using the getCard function
     cout << myHand.back().getRank() << " of " << myHand.back().getSuit() << endl << endl;
 }
 
-string Hand::getScore(){
-
+string Hand::getScore(){ //Massive function that returns the score for the hand
     int straight = 1; //A single card is a straight with length=1
     int ofKindInt = 1; //A single card is 1 of a kind. Just like you. :)
     int flush = 1; //A single card is a flush of 1
-    vector<tuple<int, string>> ofAKind; //Theoretical max size of 2, change this to an array? Pushback becomes array[1]
+    vector<tuple<int, string>> ofAKind; //Vector to hold tuples that include ofKindInt and card rank
     string result;
     bool aceHigh = false;
 
     //Evaluate hand
     for(int i=0; i<myHand.size()-1; i++){
-        if(myHand[i].suitInt == myHand[i+1].suitInt) //Check for suit match. NOT an accurate count but works for flush=5
+        if(myHand[i].suitInt == myHand[i+1].suitInt) //Check for suit match. Probably only accurate when =5 & flush is present!
             flush++;
         if(myHand[i].rankInt+1 == myHand[i+1].rankInt){ //Check for straight
             straight++;
@@ -240,12 +240,12 @@ string Hand::getScore(){
             ofKindInt++;
             if(ofKindInt == 2) //Adds an ofAKind tuple and sets as pair
                 ofAKind.push_back(make_tuple(ofKindInt,myHand[i].getRank()));
-            else if(ofKindInt == 3) //Sets recent/working ofAKind tuple to 3 of a kind
+            else if(ofKindInt == 3) //Sets last ofAKind tuple to 3 of a kind
                 ofAKind.back() = make_tuple(ofKindInt,myHand[i].getRank());
-            else if(ofKindInt == 4) //Sets recent/working ofAKind tuple to 3 of a kind
+            else if(ofKindInt == 4) //Sets last ofAKind tuple to 4 of a kind
                 ofAKind.back() = make_tuple(ofKindInt,myHand[i].getRank());
         }
-         else{ //Reset ofKindInt counter
+         else{ //No match & no straight? Reset ofKindInt counter!
             ofKindInt = 1;
         }
     }
@@ -257,43 +257,42 @@ string Hand::getScore(){
     //Evaluate scoring
     if(straight==5){//Straight
         if((myHand.back().rankInt == 13) && (aceHigh == true))
-            result = "Ace-high straight";
+            result = "Ace-high straight!";
         else
-            result = myHand.back().getRank() + "-high straight";
+            result = myHand.back().getRank() + "-high straight!";
         if (flush==5)
             result = result + " flush!";
     }
     else if(flush==5)//Flush
-        result = myHand.back().getSuit() + " flush";
-    else if(ofAKind.size()>0){ // Check ofAKind conditions
+        result = myHand.back().getSuit() + " flush!";
+
+    else if(ofAKind.size()>0){ //Check ofAKind size to make sure it's not empty. Bad things happen if it's empty and these checks happen...
         if ((get<0>(ofAKind[0]) == 2)&&(ofAKind.size()==1))//Pair
-            result = "Pair of " + get<1>(ofAKind[0]) + "s";
+            result = "Pair of " + get<1>(ofAKind[0]) + "s!";
         else if ((get<0>(ofAKind[0])) + (get<0>(ofAKind[1])) == 4) //Two Pair
-            result = "Pair of " + get<1>(ofAKind[0]) + "s and pair of " + get<1>(ofAKind[1]) + "s";
+            result = "Pair of " + get<1>(ofAKind[0]) + "s and pair of " + get<1>(ofAKind[1]) + "s!";
         else if ((get<0>(ofAKind[0]) == 3)&&(ofAKind.size()==1))//Three of a kind
-            result = "Three " + get<1>(ofAKind[0]) + "s";
+            result = "Three " + get<1>(ofAKind[0]) + "s!";
         else if ((get<0>(ofAKind[0])==2) && (get<0>(ofAKind[1])==3)) //Full House, pair rank is low
-            result = "Full house: " + get<1>(ofAKind[1]) + "s over " + get<1>(ofAKind[0]) + "s";
+            result = "Full house: " + get<1>(ofAKind[1]) + "s over " + get<1>(ofAKind[0]) + "s!";
         else if ((get<0>(ofAKind[0])==3) && (get<0>(ofAKind[1])==2)) //Full House, pair rank is high
-            result = "Full house: " + get<1>(ofAKind[0]) + "s over " + get<1>(ofAKind[1]) + "s";
+            result = "Full house: " + get<1>(ofAKind[0]) + "s over " + get<1>(ofAKind[1]) + "s!";
         else if (get<0>(ofAKind[0]) == 4) //Four of a kind
-            result = "Four " + get<1>(ofAKind[0]) + "s";
+            result = "Four " + get<1>(ofAKind[0]) + "s!";
         else
             result = "Something has gone horribly wrong :(";
     }
     else
-        result = "You got nothing. Sad panda.";
+        result = "You got nothing. Sad panda. :(";
     return result;
 }
 
-void Hand::sortHand(){ //
-    sort(myHand.begin(), myHand.end()); //Something isn't right about this
-
-}
-
-void Hand::clear(){ // Clears hand between deals
-    myHand.clear();
-
-}
-
 bool operator<(const Card &c1, const Card &c2) {return (c1.rankInt < c2.rankInt);} //used for sort
+
+void Hand::sortHand(){ //Sorts the hand
+    sort(myHand.begin(), myHand.end());
+}
+
+void Hand::clear(){ // Clears hand vector
+    myHand.clear();
+}
