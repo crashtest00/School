@@ -1,10 +1,14 @@
 # depslib dependency file v1.0
-1494577141 source:c:\school\csc123\object_lab\main.cpp
+1494581423 source:c:\school\csc123\object_lab\main.cpp
+	<iostream>
+	<vector>
+	<cardgame.h>
+
+1494581466 c:\school\csc123\object_lab\\cardgame.h
+	<iomanip>
+	<vector>
+	<tuple>
+	<string>
 	<iostream>
 	<algorithm>
-	<vector>
-	<stdlib.h>
-	<iomanip>
-	<cstdlib>
-	<tuple>
 
